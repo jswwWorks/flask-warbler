@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm
+from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm
 from models import db, connect_db, User, Message
 
 load_dotenv()
@@ -24,8 +24,18 @@ connect_db(app)
 
 
 ##############################################################################
-# User signup/login/logout
+# Form protection
 
+@app.before_request
+def add_csrf_to_g():
+    """Before each request, add CSRF protection to any form."""
+
+    form = CSRFProtectForm()
+    g.csrf = form
+
+
+##############################################################################
+# User signup/login/logout
 
 @app.before_request
 def add_user_to_g():
@@ -36,6 +46,7 @@ def add_user_to_g():
 
     else:
         g.user = None
+
 
 
 def do_login(user):
