@@ -132,7 +132,7 @@ def logout():
 
         do_logout()
         flash("You have sucessfully logged out. Come again soon!")
-        return redirect("/users/login.html")
+        return redirect("/login")
 
     # how to handle invalid csrf -- consider changing route
     return redirect("/")
