@@ -31,7 +31,7 @@ def add_csrf_to_g():
     """Before each request, add CSRF protection to any form."""
 
     form = CSRFProtectForm()
-    g.csrf = form
+    g.csrf_form = form
 
 
 ##############################################################################
@@ -128,8 +128,19 @@ def logout():
 
     form = g.csrf_form
 
+    if form.validate_on_submit:
+
+        do_logout()
+        flash("You have sucessfully logged out. Come again soon!")
+        return redirect("/users/login.html")
+
+    # how to handle invalid csrf -- consider changing route
+    return redirect("/")
+
     # IMPLEMENT THIS AND FIX BUG
     # DO NOT CHANGE METHOD ON ROUTE
+    # note -- we think we've resolved this bug. Test it out before deleting
+    # comment
 
 
 ##############################################################################
