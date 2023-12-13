@@ -128,7 +128,7 @@ def logout():
 
     form = g.csrf_form
 
-    if form.validate_on_submit:
+    if form.validate_on_submit():
 
         do_logout()
         flash("You have sucessfully logged out. Come again soon!")
