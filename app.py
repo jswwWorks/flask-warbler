@@ -372,7 +372,9 @@ def homepage():
         messages = (Message
                     .query
                     .order_by(Message.timestamp.desc())
+                    .filter(Message.user_id == g.user.id)
                     .limit(100)
+                    # .filter(g.user.messages and g.user.following.messages)
                     .all())
 
         return render_template('home.html', messages=messages)
