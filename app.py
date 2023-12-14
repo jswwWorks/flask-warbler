@@ -372,7 +372,8 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of self & followed_users
     """
-
+    #g.user.following is a list so add a loop to get all the user ids and turn into list
+    #and then check Message.user_id in that list of user ids
     if g.user:
         print(g.user.following)
         messages = (Message
