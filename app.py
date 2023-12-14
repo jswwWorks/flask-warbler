@@ -244,8 +244,6 @@ def stop_following(follow_id):
 def edit_profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -277,8 +275,10 @@ def edit_profile():
             db.session.add(user)
             db.session.commit()
             return redirect(f"/users/{user.id}")
-    else:
-        return render_template("/users/edit.html", form=form)
+
+    return render_template("/users/edit.html", form=form)
+
+
 
 @app.post('/users/delete')
 def delete_user():
