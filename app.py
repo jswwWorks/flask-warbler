@@ -6,7 +6,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm, EditProfileForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Follow
 
 load_dotenv()
 
@@ -57,8 +57,9 @@ def do_login(user):
 
 def do_logout():
     """Log out user."""
-
+    print("how about here")
     if CURR_USER_KEY in session:
+        print("we go here")
         del session[CURR_USER_KEY]
 
 
@@ -217,21 +218,14 @@ def start_following(follow_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    followed_user = User.query.get_or_404(follow_id)
-    g.user.following.append(followed_user)
-    db.session.commit()
+    form = CSRFProtectForm()
 
-    return redirect(f"/users/{g.user.id}/following")
+    if form.validate_on_submit():
+        followed_user = User.query.get_or_404(follow_id)
+        g.user.following.append(followed_user)
+        db.session.commit()
 
-    #FIXME: csrf
-    # form = CSRFProtectForm()
-
-    # if form.validate_on_submit():
-    #     followed_user = User.query.get_or_404(follow_id)
-    #     g.user.following.append(followed_user)
-    #     db.session.commit()
-
-    #     return redirect(f"/users/{g.user.id}/following")
+        return redirect(f"/users/{g.user.id}/following")
 
     # Redirects to homepage if CSRF token isn't present
     return redirect("/")
@@ -250,22 +244,14 @@ def stop_following(follow_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    followed_user = User.query.get_or_404(follow_id)
-    g.user.following.remove(followed_user)
-    db.session.commit()
+    form = CSRFProtectForm()
 
-    return redirect(f"/users/{g.user.id}/following")
+    if form.validate_on_submit():
+        followed_user = User.query.get_or_404(follow_id)
+        g.user.following.remove(followed_user)
+        db.session.commit()
 
-
-    # FIXME: csrf
-    # form = CSRFProtectForm()
-
-    # if form.validate_on_submit():
-    #     followed_user = User.query.get_or_404(follow_id)
-    #     g.user.following.remove(followed_user)
-    #     db.session.commit()
-
-    #     return redirect(f"/users/{g.user.id}/following")
+        return redirect(f"/users/{g.user.id}/following")
 
 
 
@@ -331,6 +317,16 @@ def delete_user():
     form = CSRFProtectForm()
 
     if form.validate_on_submit():
+        try:
+            Message.query.filter(g.user.id == Message.user_id).delete()
+            Follow.query.filter(
+                db.or_(g.user.id == Follow.user_being_followed_id,
+                       g.user.id == Follow.user_following_id)).delete()
+
+        except IntegrityError:
+            flash("Cannot delete user information because of ref integrity!")
+            return redirect(f"/users/{g.user.id}")
+
         do_logout()
 
         db.session.delete(g.user)
@@ -339,7 +335,6 @@ def delete_user():
         return redirect("/signup")
 
     #TODO: check csrf
-
     # Redirects to homepage if CSRF token isn't present
     return redirect("/")
 
@@ -436,14 +431,14 @@ def homepage():
             following_ids.append(item.id)
 
         print(following_ids)
+        print(type(Message.user_id))
 
         messages = (Message
                     .query
                     .order_by(Message.timestamp.desc())
                     .filter(
-                        Message.user_id == g.user.id
-                        or
-                        Message.user_id in following_ids
+                        db.or_(Message.user_id == g.user.id,
+                        Message.user_id.in_(following_ids))
                     )
                     .limit(100)
                     .all())
