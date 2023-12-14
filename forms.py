@@ -2,8 +2,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField
 from wtforms.validators import InputRequired, Email, Length, URL, Optional
 
-from models import DEFAULT_IMAGE_URL, DEFAULT_HEADER_IMAGE_URL
-
 class MessageForm(FlaskForm):
     """Form for adding/editing messages."""
 
@@ -63,13 +61,11 @@ class EditProfileForm(FlaskForm):
 
     image_url = StringField(
         '(Optional) Image URL',
-        # default=DEFAULT_IMAGE_URL,
         validators=[Optional(), URL(), Length(max=255)]
     )
 
     header_image_url = StringField(
         '(Optional) Header Image URL',
-        # default=DEFAULT_HEADER_IMAGE_URL,
         validators=[Optional(), URL(), Length(max=255)]
     )
 
