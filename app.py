@@ -255,7 +255,7 @@ def edit_profile():
     if form.validate_on_submit():
 
         user = g.user
-        password = request.data.get("password")
+        password = form.password.data
         original_username = user.username
 
         user = User.authenticate(
@@ -268,17 +268,17 @@ def edit_profile():
 
         else:
             # If validation succeeds, grab information to update page
-            username = request.data.get("username", user.username)
-            email = request.data.get("email", user.email)
-            image_url = request.data.get("image_url", user.image_url)
-            header_image_url = request.data.get(
-                "header_image_url",
-                user.header_image_url)
-            bio = request.data.get("bio", user.bio)
+            user.username = form.username.data
+            user.email = form.email.data
+            user.image_url = form.image_url.data
+            user.header_image_url = form.header_image_url.data
+            user.bio = form.bio.data
 
-
-
-    return render_template("edit.html", form=form)
+            db.session.add(user)
+            db.session.commit()
+            return redirect(f"/users/{user.id}")
+    else:
+        return render_template("/users/edit.html", form=form)
 
 @app.post('/users/delete')
 def delete_user():
