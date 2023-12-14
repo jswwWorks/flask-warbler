@@ -86,12 +86,9 @@ class User(db.Model):
         db.String(100),
         nullable=False,
     )
-    # user_instance.messages.text
-    # message_instance.user.username
+
     messages = db.relationship('Message', backref="user")
 
-    # following_user_instance.followers.username
-    # followers_user_instance.following.password
     followers = db.relationship(
         "User",
         secondary="follows",

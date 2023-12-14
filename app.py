@@ -223,6 +223,21 @@ def start_following(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
+    #FIXME: csrf
+    # form = CSRFProtectForm()
+
+    # if form.validate_on_submit():
+    #     followed_user = User.query.get_or_404(follow_id)
+    #     g.user.following.append(followed_user)
+    #     db.session.commit()
+
+    #     return redirect(f"/users/{g.user.id}/following")
+
+    # Redirects to homepage if CSRF token isn't present
+    return redirect("/")
+
+
+
 
 @app.post('/users/stop-following/<int:follow_id>')
 def stop_following(follow_id):
@@ -240,6 +255,23 @@ def stop_following(follow_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
+
+
+    # FIXME: csrf
+    # form = CSRFProtectForm()
+
+    # if form.validate_on_submit():
+    #     followed_user = User.query.get_or_404(follow_id)
+    #     g.user.following.remove(followed_user)
+    #     db.session.commit()
+
+    #     return redirect(f"/users/{g.user.id}/following")
+
+
+
+    # Redirects to homepage if CSRF token isn't present
+    return redirect("/")
+
 
 
 @app.route('/users/profile', methods=["GET", "POST"])
@@ -295,12 +327,21 @@ def delete_user():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    do_logout()
 
-    db.session.delete(g.user)
-    db.session.commit()
+    form = CSRFProtectForm()
 
-    return redirect("/signup")
+    if form.validate_on_submit():
+        do_logout()
+
+        db.session.delete(g.user)
+        db.session.commit()
+
+        return redirect("/signup")
+
+    #TODO: check csrf
+
+    # Redirects to homepage if CSRF token isn't present
+    return redirect("/")
 
 
 ##############################################################################
@@ -325,6 +366,8 @@ def add_message():
         db.session.commit()
 
         return redirect(f"/users/{g.user.id}")
+
+    #TODO: check csrf
 
     return render_template('messages/create.html', form=form)
 
@@ -354,11 +397,18 @@ def delete_message(message_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get_or_404(message_id)
-    db.session.delete(msg)
-    db.session.commit()
+    form = CSRFProtectForm()
 
-    return redirect(f"/users/{g.user.id}")
+    if form.validate_on_submit():
+        msg = Message.query.get_or_404(message_id)
+        db.session.delete(msg)
+        db.session.commit()
+
+        return redirect(f"/users/{g.user.id}")
+
+    # TODO: test csrf
+    # Redirects to homepage if CSRF token isn't present
+    return redirect("/")
 
 
 ##############################################################################
@@ -372,19 +422,30 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of self & followed_users
     """
-    #g.user.following is a list so add a loop to get all the user ids and turn into list
-    #and then check Message.user_id in that list of user ids
+
     if g.user:
+
         print(g.user.following)
+
+        # list of users
+        users_list = g.user.following
+
+        following_ids = []
+
+        for item in users_list:
+            following_ids.append(item.id)
+
+        print(following_ids)
+
         messages = (Message
                     .query
                     .order_by(Message.timestamp.desc())
                     .filter(
                         Message.user_id == g.user.id
-                        # or g.user.following.id == Message.user_id
-                        )
+                        or
+                        Message.user_id in following_ids
+                    )
                     .limit(100)
-                    # .filter(g.user.messages and g.user.following.messages)
                     .all())
 
         return render_template('home.html', messages=messages)
