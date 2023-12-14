@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm, EditProfileForm
 from models import db, connect_db, User, Message, Follow
+from models import DEFAULT_IMAGE_URL, DEFAULT_HEADER_IMAGE_URL
 
 load_dotenv()
 
@@ -46,7 +47,6 @@ def add_user_to_g():
 
     else:
         g.user = None
-
 
 
 def do_login(user):
@@ -129,21 +129,13 @@ def logout():
 
     form = g.csrf_form
 
-    #TODO:could check that the user is logged in as well in session
-    if form.validate_on_submit():
+    if form.validate_on_submit() and g.user.id == session[CURR_USER_KEY]:
 
         do_logout()
         flash("You have sucessfully logged out. Come again soon!")
         return redirect("/login")
 
-    # how to handle invalid csrf -- consider changing route
-    #TODO:could raise unauthorized or flash message if invalid csrf
     return redirect("/")
-
-    # IMPLEMENT THIS AND FIX BUG
-    # DO NOT CHANGE METHOD ON ROUTE
-    # note -- we think we've resolved this bug. Test it out before deleting
-    # comment
 
 
 ##############################################################################
@@ -291,7 +283,15 @@ def edit_profile():
             user.username = form.username.data
             user.email = form.email.data
             user.image_url = form.image_url.data
+
+            if not user.image_url:
+                user.image_url = DEFAULT_IMAGE_URL
+
             user.header_image_url = form.header_image_url.data
+
+            if not user.header_image_url:
+                user.header_image_url = DEFAULT_HEADER_IMAGE_URL
+
             user.bio = form.bio.data
 
             db.session.add(user)
@@ -334,8 +334,6 @@ def delete_user():
 
         return redirect("/signup")
 
-    #TODO: check csrf
-    # Redirects to homepage if CSRF token isn't present
     return redirect("/")
 
 
@@ -362,8 +360,6 @@ def add_message():
 
         return redirect(f"/users/{g.user.id}")
 
-    #TODO: check csrf
-
     return render_template('messages/create.html', form=form)
 
 
@@ -387,7 +383,6 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
-    #check for csrf and if user can only delete their own messages
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -396,13 +391,16 @@ def delete_message(message_id):
 
     if form.validate_on_submit():
         msg = Message.query.get_or_404(message_id)
-        db.session.delete(msg)
-        db.session.commit()
+        print("trying to delete a message")
+        # Ensures users can only delete their own messages
+        if msg.user_id == g.user.id:
+            print("actually going to delete a message")
+            print(msg.user_id, "=msg.user_id", g.user.id, "=g.user.id")
+            db.session.delete(msg)
+            db.session.commit()
 
         return redirect(f"/users/{g.user.id}")
 
-    # TODO: test csrf
-    # Redirects to homepage if CSRF token isn't present
     return redirect("/")
 
 
@@ -420,18 +418,11 @@ def homepage():
 
     if g.user:
 
-        print(g.user.following)
-
-        # list of users
         users_list = g.user.following
-
         following_ids = []
 
         for item in users_list:
             following_ids.append(item.id)
-
-        print(following_ids)
-        print(type(Message.user_id))
 
         messages = (Message
                     .query
