@@ -128,6 +128,7 @@ def logout():
 
     form = g.csrf_form
 
+    #TODO:could check that the user is logged in as well in session
     if form.validate_on_submit():
 
         do_logout()
@@ -135,6 +136,7 @@ def logout():
         return redirect("/login")
 
     # how to handle invalid csrf -- consider changing route
+    #TODO:could raise unauthorized or flash message if invalid csrf
     return redirect("/")
 
     # IMPLEMENT THIS AND FIX BUG
@@ -250,6 +252,8 @@ def edit_profile():
 
     form = EditProfileForm(obj=g.user)
 
+    #handle default image displaying when nothing is entered to url box
+    #sql alch doesn't handle default image displaying when updating only on creation
     if form.validate_on_submit():
 
         user = g.user
@@ -286,7 +290,7 @@ def delete_user():
 
     Redirect to signup page.
     """
-
+    #add csrf form and check for csrf validation and check deleting users
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -345,6 +349,7 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
+    #check for csrf and if user can only delete their own messages
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -369,10 +374,14 @@ def homepage():
     """
 
     if g.user:
+        print(g.user.following)
         messages = (Message
                     .query
                     .order_by(Message.timestamp.desc())
-                    .filter(Message.user_id == g.user.id)
+                    .filter(
+                        Message.user_id == g.user.id
+                        # or g.user.following.id == Message.user_id
+                        )
                     .limit(100)
                     # .filter(g.user.messages and g.user.following.messages)
                     .all())
