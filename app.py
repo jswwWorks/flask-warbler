@@ -5,9 +5,22 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm, EditProfileForm
-from models import db, connect_db, User, Message, Follow
-from models import DEFAULT_IMAGE_URL, DEFAULT_HEADER_IMAGE_URL
+from forms import (
+    UserAddForm,
+    LoginForm,
+    MessageForm,
+    CSRFProtectForm,
+    EditProfileForm
+    )
+from models import (
+    db,
+    connect_db,
+    User,
+    Message,
+    Follow,
+    DEFAULT_IMAGE_URL,
+    DEFAULT_HEADER_IMAGE_URL
+    )
 
 load_dotenv()
 
@@ -31,8 +44,7 @@ connect_db(app)
 def add_csrf_to_g():
     """Before each request, add CSRF protection to any form."""
 
-    form = CSRFProtectForm()
-    g.csrf_form = form
+    g.csrf_form = CSRFProtectForm()
 
 
 ##############################################################################
@@ -57,9 +69,8 @@ def do_login(user):
 
 def do_logout():
     """Log out user."""
-    print("how about here")
+
     if CURR_USER_KEY in session:
-        print("we go here")
         del session[CURR_USER_KEY]
 
 
@@ -85,12 +96,12 @@ def signup():
                 username=form.username.data,
                 password=form.password.data,
                 email=form.email.data,
-                image_url=form.image_url.data or User.image_url.default.arg,
+                image_url=form.image_url.data or User.image_url.default.arg
             )
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", 'danger')
+            flash("Username already taken or email already used", 'danger')
             return render_template('users/signup.html', form=form)
 
         do_login(user)
@@ -210,7 +221,7 @@ def start_following(follow_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    form = CSRFProtectForm()
+    form = g.csrf_form
 
     if form.validate_on_submit():
         followed_user = User.query.get_or_404(follow_id)
@@ -236,7 +247,7 @@ def stop_following(follow_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    form = CSRFProtectForm()
+    form = g.csrf_form
 
     if form.validate_on_submit():
         followed_user = User.query.get_or_404(follow_id)
@@ -283,16 +294,14 @@ def edit_profile():
             user.username = form.username.data
             user.email = form.email.data
             user.image_url = form.image_url.data
+            user.header_image_url = form.header_image_url.data
+            user.bio = form.bio.data
 
             if not user.image_url:
                 user.image_url = DEFAULT_IMAGE_URL
 
-            user.header_image_url = form.header_image_url.data
-
             if not user.header_image_url:
                 user.header_image_url = DEFAULT_HEADER_IMAGE_URL
-
-            user.bio = form.bio.data
 
             db.session.add(user)
             db.session.commit()
@@ -308,13 +317,13 @@ def delete_user():
 
     Redirect to signup page.
     """
-    #add csrf form and check for csrf validation and check deleting users
+
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
 
-    form = CSRFProtectForm()
+    form = g.csrf_form
 
     if form.validate_on_submit():
         try:
@@ -324,7 +333,7 @@ def delete_user():
                        g.user.id == Follow.user_following_id)).delete()
 
         except IntegrityError:
-            flash("Cannot delete user information because of ref integrity!")
+            flash("Error: Cannot delete user!")
             return redirect(f"/users/{g.user.id}")
 
         do_logout()
@@ -387,14 +396,12 @@ def delete_message(message_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    form = CSRFProtectForm()
+    form = g.csrf_form
 
     if form.validate_on_submit():
         msg = Message.query.get_or_404(message_id)
-        print("trying to delete a message")
         # Ensures users can only delete their own messages
         if msg.user_id == g.user.id:
-            print("actually going to delete a message")
             print(msg.user_id, "=msg.user_id", g.user.id, "=g.user.id")
             db.session.delete(msg)
             db.session.commit()
