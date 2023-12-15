@@ -351,6 +351,15 @@ def delete_user():
     #can flash message about malicious no csrf token actions
     return redirect("/")
 
+@app.get("/users/<int:user_id>/liked_messages")
+def show_liked_messages(user_id):
+    """show page with the liked messages of user"""
+    like_instances = Like.query.filter(user_id == Like.user_id).all()
+    message_ids = [obj.message_id for obj in like_instances]
+    print("these are the message ids", message_ids)
+    messages = Message.query.filter(Message.id.in_(message_ids)).all()
+    return render_template("users/liked-messages.html", messages=messages)
+
 
 ##############################################################################
 # Messages routes:
