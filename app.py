@@ -184,9 +184,9 @@ def show_user(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    num_likes = Like.query.filter(Like.user_id == user.id).count()
+    likes = Like.query.filter(Like.user_id == user.id).all()
 
-    return render_template('users/show.html', user=user, num_likes=num_likes)
+    return render_template('users/show.html', user=user, likes=likes)
 
 
 @app.get('/users/<int:user_id>/following')
@@ -198,7 +198,9 @@ def show_following(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/following.html', user=user)
+    likes = Like.query.filter(Like.user_id == user.id).all()
+
+    return render_template('users/following.html', user=user, likes=likes)
 
 
 @app.get('/users/<int:user_id>/followers')
@@ -210,7 +212,9 @@ def show_followers(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/followers.html', user=user)
+    likes = Like.query.filter(Like.user_id == user.id).all()
+
+    return render_template('users/followers.html', user=user, likes=likes)
 
 
 @app.post('/users/follow/<int:follow_id>')

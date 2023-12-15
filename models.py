@@ -106,9 +106,28 @@ class User(db.Model):
         nullable=False,
     )
 
+
+
+
+    # write comments above relationships with example cases
+    # & play around in ipython to see what you're getting back
+
     messages = db.relationship('Message', backref="user")
+    # for this user, returns the messages this user has written
 
     likes = db.relationship('Like', backref="user")
+    # returns the messages the user has liked
+
+    liked_messages = db.relationship(
+        "Message",
+        secondary="likes",
+        backref="users"
+    )
+    # all messages a given user has liked
+    # backref would
+
+    # TODO: make a through relationship to see liked messages to determine
+    # which messages are liked (ideas: secondary property is likes)
 
     followers = db.relationship(
         "User",
