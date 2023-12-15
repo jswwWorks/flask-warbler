@@ -57,6 +57,13 @@
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
             </div>
+            <div style="z-index: 2;">
+              <form method="POST"
+              action="/messages/{{ msg.id }}/alter_like_state">
+              {{ g.csrf_form.csrf_token }}
+                <button class="btn btn-outline-primary">Like Message</button>
+              </form>
+            </div>
           </li>
         {% endfor %}
       </ul>
