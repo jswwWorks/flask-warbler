@@ -140,12 +140,13 @@ def logout():
 
     form = g.csrf_form
 
-    if form.validate_on_submit() and g.user.id == session[CURR_USER_KEY]:
+    if form.validate_on_submit() and g.user:
 
         do_logout()
         flash("You have sucessfully logged out. Come again soon!")
         return redirect("/login")
 
+    #can add a flash message for unauthorization
     return redirect("/")
 
 
@@ -293,16 +294,18 @@ def edit_profile():
             # If validation succeeds, grab information to update page
             user.username = form.username.data
             user.email = form.email.data
-            user.image_url = form.image_url.data
-            user.header_image_url = form.header_image_url.data
+            user.image_url = form.image_url.data or DEFAULT_IMAGE_URL
+            # user.image_url = form.image_url.data
+            user.header_image_url = form.header_image_url.data or DEFAULT_HEADER_IMAGE_URL
             user.bio = form.bio.data
 
-            if not user.image_url:
-                user.image_url = DEFAULT_IMAGE_URL
+            # if not user.image_url:
+            #     user.image_url = DEFAULT_IMAGE_URL
 
-            if not user.header_image_url:
-                user.header_image_url = DEFAULT_HEADER_IMAGE_URL
+            # if not user.header_image_url:
+            #     user.header_image_url = DEFAULT_HEADER_IMAGE_URL
 
+            #can remove db.session.add(user)
             db.session.add(user)
             db.session.commit()
             return redirect(f"/users/{user.id}")
@@ -330,7 +333,8 @@ def delete_user():
             Message.query.filter(g.user.id == Message.user_id).delete()
             Follow.query.filter(
                 db.or_(g.user.id == Follow.user_being_followed_id,
-                       g.user.id == Follow.user_following_id)).delete()
+                       g.user.id == Follow.user_following_id)
+                       ).delete()
 
         except IntegrityError:
             flash("Error: Cannot delete user!")
@@ -342,7 +346,7 @@ def delete_user():
         db.session.commit()
 
         return redirect("/signup")
-
+    #can flash message about malicious no csrf token actions
     return redirect("/")
 
 
@@ -426,6 +430,7 @@ def homepage():
     if g.user:
 
         users_list = g.user.following
+        #could make into list comprehension
         following_ids = []
 
         for item in users_list:
@@ -433,11 +438,11 @@ def homepage():
 
         messages = (Message
                     .query
-                    .order_by(Message.timestamp.desc())
                     .filter(
                         db.or_(Message.user_id == g.user.id,
                         Message.user_id.in_(following_ids))
                     )
+                    .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
 

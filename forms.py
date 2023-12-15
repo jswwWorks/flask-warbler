@@ -56,7 +56,7 @@ class EditProfileForm(FlaskForm):
 
     email = StringField(
         'E-mail',
-        validators=[InputRequired(), Email(), Length(max=50)],
+        validators=[Email(), Length(max=50)],
     )
 
     image_url = StringField(

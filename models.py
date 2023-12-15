@@ -35,6 +35,23 @@ class Follow(db.Model):
         primary_key=True,
     )
 
+class Like(db.Model):
+    """Connecting message id to id of user who liked message"""
+
+    __tablename__ = 'likes'
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
+    message_id = db.Column(
+        db.Integer,
+        db.ForeignKey('messages.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
 
 class User(db.Model):
     """User in the system."""
@@ -177,6 +194,12 @@ class Message(db.Model):
     )
 
     user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+
+    liked = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
