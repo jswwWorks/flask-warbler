@@ -184,8 +184,9 @@ def show_user(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
+    num_likes = Like.query.filter(Like.user_id == user.id).count()
 
-    return render_template('users/show.html', user=user)
+    return render_template('users/show.html', user=user, num_likes=num_likes)
 
 
 @app.get('/users/<int:user_id>/following')
