@@ -415,6 +415,60 @@ def delete_message(message_id):
     return redirect("/")
 
 
+# FIXME: should this be a patch request? ask
+@app.post('/messages/<int:message_id>/alter_like_state')
+def alter_like_state(message_id):
+    """Takes message_id (an integer).
+
+    Lets logged in users like/unlike the given message. (If user had previously
+    liked a message, then this would unlike it, and vice versa).
+
+    Re-renders template with like field.
+    """
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    form = g.csrf_form
+
+    if form.validate_on_submit():
+
+        msg = Message.query.get_or_404(message_id)
+
+        if msg.user_id != g.user.id:
+            flash("you liked the message! thanks so much!")
+            # content here to like/unlike
+            # db.session.commit()
+
+        return redirect(f"/users/{g.user.id}")
+
+    flash("Access unauthorized.", "danger")
+    return redirect('/')
+#     Overall steps in process:
+
+#      - update html to include a field (potentially using icons from bootstrap)
+
+#     2 steps to accomplishing this:
+#     option 1) have 2 images that we're swapping between
+#     option 2) we have a class "liked" and a class "unliked" where everything
+# has a preset state of being unliked. When the class turns to liked, then in the
+# # css it knows to swap the images.
+
+# figuring out routing (the icon should be a button within a form that has
+# csrf protection and the form's action is this route.)
+
+# as for actually liking/unliking, to separate concerns it might make the most
+# sense to have a helper funciton that swaps classes its own thing
+
+
+# in this view function: it would add/ remove the liked row to/from the model.
+
+
+
+
+
+
 ##############################################################################
 # Homepage and error pages
 

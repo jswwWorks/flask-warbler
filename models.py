@@ -35,6 +35,8 @@ class Follow(db.Model):
         primary_key=True,
     )
 
+
+
 class Like(db.Model):
     """Connecting message id to id of user who liked message"""
 
@@ -105,6 +107,8 @@ class User(db.Model):
     )
 
     messages = db.relationship('Message', backref="user")
+
+    likes = db.relationship('Like', backref="user")
 
     followers = db.relationship(
         "User",
@@ -199,11 +203,7 @@ class Message(db.Model):
         nullable=False,
     )
 
-    liked = db.Column(
-        db.Integer,
-        db.ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False,
-    )
+    likes = db.relationship('Like', backref="message")
 
 
 def connect_db(app):
