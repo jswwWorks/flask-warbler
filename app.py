@@ -417,6 +417,7 @@ def delete_message(message_id):
 
 
 # FIXME: should this be a patch request? ask
+# TODO: maybe decompose this to a helper function in the future?
 @app.post('/messages/<int:message_id>/alter_like_state')
 def alter_like_state(message_id):
     """Takes message_id (an integer).
@@ -447,26 +448,21 @@ def alter_like_state(message_id):
                     Like.message_id == msg.id))
 
         like = like_query.one_or_none()
-        # like = Like.query.filter(
-        #     db.and_(Like.user_id == user.id,
-        #             Like.message_id == msg.id)).one_or_none()
 
         # We're looking in the likes table to see if there is a row
         # where the id of the user is equal to the currently logged in user
         # AND where the id of the message is equal to the id of the liked message
-        print("this is the message we found=",like)
 
         if like:
-
             like_query.delete()
             db.session.commit()
             flash("you have unliked this message")
+
         else:
-            flash("you liked the message! thanks so much!")
             new_like = Like(user_id=g.user.id, message_id=message_id)
             db.session.add(new_like)
             db.session.commit()
-            # content here to like/unlike
+            flash("you liked the message! thanks so much!")
 
         return redirect(f"/users/{g.user.id}")
 
