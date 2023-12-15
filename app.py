@@ -18,6 +18,7 @@ from models import (
     User,
     Message,
     Follow,
+    Like,
     DEFAULT_IMAGE_URL,
     DEFAULT_HEADER_IMAGE_URL
     )
@@ -436,10 +437,25 @@ def alter_like_state(message_id):
 
         msg = Message.query.get_or_404(message_id)
 
-        if msg.user_id != g.user.id:
+        if msg.user_id == g.user.id:
+            flash("you cannot like/ unlike your own message!")
+            return redirect(f"/users/{g.user.id}")
+
+
+        like = Like.query.filter(
+            db.and_(msg.user_id == g.user.id,
+                    Like.message_id == message_id))
+        print("tell me this works",like)
+        if like:
+            like.delete()
+            db.session.commit()
+            flash("you have unliked this message")
+        else:
             flash("you liked the message! thanks so much!")
+            new_like = Like(user_id=g.user.id, message_id=message_id)
+            db.session.add(new_like)
+            db.session.commit()
             # content here to like/unlike
-            # db.session.commit()
 
         return redirect(f"/users/{g.user.id}")
 
