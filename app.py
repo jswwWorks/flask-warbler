@@ -436,18 +436,29 @@ def alter_like_state(message_id):
     if form.validate_on_submit():
 
         msg = Message.query.get_or_404(message_id)
+        user = g.user
 
         if msg.user_id == g.user.id:
             flash("you cannot like/ unlike your own message!")
             return redirect(f"/users/{g.user.id}")
 
+        like_query = Like.query.filter(
+            db.and_(Like.user_id == user.id,
+                    Like.message_id == msg.id))
 
-        like = Like.query.filter(
-            db.and_(msg.user_id == g.user.id,
-                    Like.message_id == message_id))
-        print("tell me this works",like)
+        like = like_query.one_or_none()
+        # like = Like.query.filter(
+        #     db.and_(Like.user_id == user.id,
+        #             Like.message_id == msg.id)).one_or_none()
+
+        # We're looking in the likes table to see if there is a row
+        # where the id of the user is equal to the currently logged in user
+        # AND where the id of the message is equal to the id of the liked message
+        print("this is the message we found=",like)
+
         if like:
-            like.delete()
+
+            like_query.delete()
             db.session.commit()
             flash("you have unliked this message")
         else:
